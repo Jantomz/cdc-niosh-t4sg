@@ -48,27 +48,65 @@ export class PdfService {
   async queryPdfs(query: string, limit: number = 5) {
     // TODO: Implement query embedding and similarity search
     // 1. Generate embedding for query
+
+    let query_embedding = await this.supabaseService.getEmbedding(query)
+
+    function Normalize( Embed_vector: number[]): number[] {
+
+      const mag = Math.sqrt(Embed_vector.reduce((accum_value, curr_value) => accum_value + curr_value**2, 0 ));
+      if (mag == 0) return Embed_vector;
+      return Embed_vector.map(val => val / mag);
+
+    }
+
+    query_embedding = Normalize(query_embedding);
+
     // 2. Perform vector similarity search in Supabase
+
+    const { data: matches, error } = await this.supabaseService.client.rpc('match_pdf_chunks', { 
+      query_embedding,
+      match_count: limit,
+      similarity_threshold: 0.7
+    });
+
+    if (error) {
+      console.error('Error in vector similarity search:', error);
+      throw new Error('Vector similarity search failed');
+    }
+
+
     // 3. Retrieve and rank results
+    
+    const enrichedResults = await Promise.all(
+      matches.map(async (match) => {
+        
+        const { data: pdfMeta, error: metaErr } = await this.supabaseService.client
+          .from('pdfs').select('title, author').eq('id', match.pdf_id).single();
+
+        if (metaErr) {
+          console.warn(`Metadata not found for PDF ID ${match.pdf_id}`);
+        }
+        
+
+        const filePath = `${match.pdf_id}.pdf`;
+        const { data: signedUrlData } = await this.supabaseService.client
+          .storage.from('pdfs').createSignedUrl(filePath, 60 * 60);
+
+        return {
+          pdfId: match.pdf_id,
+          title: pdfMeta?.title || 'Untitled PDF',
+          similarityScore: match.similarity,
+          matchedText: match.content,
+          url: signedUrlData?.signedUrl || pdfMeta?.url || ''
+        };
+      })
+    );
+
+    enrichedResults.sort((a, b) => b.similarityScore - a.similarityScore);
+
 
     return {
-      results: [
-        {
-          pdfId: 'pdf-id-1',
-          title: 'Most Relevant PDF',
-          similarityScore: 0.92,
-          matchedText: 'The section of text that matched the query...',
-          url: 'https://example.com/pdf1',
-        },
-        {
-          pdfId: 'pdf-id-2',
-          title: 'Second Relevant PDF',
-          similarityScore: 0.85,
-          matchedText: 'Another section that matched...',
-          url: 'https://example.com/pdf2',
-        },
-        // More results would appear here
-      ],
+      results: enrichedResults,
       query,
       processedAt: new Date().toISOString(),
     };
