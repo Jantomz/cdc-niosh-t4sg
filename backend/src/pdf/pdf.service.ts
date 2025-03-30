@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
+import OpenAI from "openai";
+import { CharacterTextSplitter } from "@langchain/textsplitters";
+import { Document } from "@langchain/core/documents";
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 
+const openai = new OpenAI();
 @Injectable()
 export class PdfService {
   constructor(private readonly supabaseService: SupabaseService) {}
@@ -23,6 +28,87 @@ export class PdfService {
     // 1. Retrieve PDF content
     // 2. Generate embeddings (could use OpenAI, Hugging Face, etc.)
     // 3. Store embeddings in Supabase
+    async function generateEmbedding(input: string): Promise<number[]> {
+      const embeddingResponse = await openai.embeddings.create({
+        model: "text-embedding-3-small",
+        input,
+        encoding_format: "float",
+      });
+        if (!embeddingResponse || !embeddingResponse.data || embeddingResponse.data.length === 0) {
+        throw new Error("Failed to generate embedding");
+        }
+          return embeddingResponse.data[0].embedding;
+    }
+
+    // Retrieve PDF text content
+    const pdfRecord = await this.supabaseService.getPdfById(pdfId)
+    if (!pdfRecord || !pdfRecord.textContent) {
+      return {
+        success: false,
+        error: 'PDF text content is missing or not available',
+      };
+    }
+
+    // Chunk the text for embedding
+    // TODO: Use page break delinations for metadata
+    const words = pdfRecord.textContent;
+    const splitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 512,
+      chunkOverlap: 100,
+    });
+
+    // Modify to add more metadata (e.g. page number?)
+    const chunks = await splitter.splitDocuments([
+      new Document({ pageContent: words }),
+    ]);
+
+    if (chunks.length === 0) {
+      return {
+        success: false,
+        error: 'Failed to chunk PDF text properly',
+      };
+    }
+
+    // Generate embeddings
+    // Page and position metadata? Dependent on above
+    const embeddings: { 
+      pdfId: string;
+      text: string;
+      embedding: any;
+    }[] = [];
+
+    for (const chunk of chunks) {
+      try {
+        const embeddingVector = await generateEmbedding(chunk.pageContent);
+        embeddings.push({
+          pdfId,
+          // page: chunk.page || null,
+          // position: chunk.position || null,
+          text: chunk.pageContent,
+          embedding: embeddingVector,
+        });
+      } catch (error) {
+        // Log or handle individual chunk embedding errors
+        console.error('Error generating embedding for a chunk:', error);
+      }
+    }
+
+    if (embeddings.length === 0) {
+      return {
+        success: false,
+        error: 'Embedding generation failed for all chunks',
+      };
+    }
+    // const test = await this.supabaseService.
+
+    // 4. Store embeddings in Supabase
+    // const insertResult = await this.supabaseService.uploadPdf(embeddings);
+    // if (!insertResult.success) {
+    //   return {
+    //     success: false,
+    //     error: 'Failed to store embeddings in Supabase',
+    //   };
+    // }
 
     return {
       success: true,
