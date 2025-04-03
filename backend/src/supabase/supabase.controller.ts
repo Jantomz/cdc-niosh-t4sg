@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Controller,
   Post,
@@ -45,6 +47,26 @@ export class SupabaseController {
       filename: file.originalname,
       mimetype: file.mimetype,
     });
+  }
+
+  /**
+   * Added by Chris on Thur. Apr. 3, 2025
+   * DELIVERABLE 4: PDF Embeddings Upload Endpoint
+   *
+   * POST /supabase/embeddings
+   *
+   * Request:
+   * - JSON body with an array of embedding objects, each with pdf_id, text, and embedding fields.
+   *
+   * Response:
+   * - Object with upload status and optional error message.
+   */
+  @Post('pdf_embeddings')
+  async uploadEmbeddings(
+    @Body('embeddings')
+    embeddings: { pdf_id: string; text: string; embedding: number[] }[],
+  ) {
+    return this.supabaseService.uploadEmbeddings(embeddings);
   }
 
   /**
