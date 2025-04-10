@@ -1,9 +1,36 @@
-import { Injectable } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import { Injectable, Logger } from '@nestjs/common';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SupabaseService {
   // Connection to Supabase would be initialized here
   // This would include auth credentials and other config
+
+  // *CHRIS: Copied below from Michelle's deliverable
+  // using Supabase client to connect to Supabase backend
+  private supabase: SupabaseClient;
+  private readonly logger = new Logger(SupabaseService.name);
+
+  constructor(private configService: ConfigService) {
+    // im initializing Supabase client with credentials from environment variables but i think this can also be hardcoded
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_KEY');
+
+    if (!supabaseUrl || !supabaseKey) {
+      this.logger.error(
+        'Supabase URL or key is missing from environment variables',
+      );
+      throw new Error('Supabase configuration is incomplete');
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseKey);
+  }
 
   /**
    * DELIVERABLE 1: PDF Upload Functionality
@@ -75,5 +102,40 @@ export class SupabaseService {
       textContent: 'The extracted text content would be here...',
       url: 'https://example.com/pdf',
     };
+  }
+
+  /**
+   * Uploads a list of embeddings to Supabase.
+   *
+   * Each embedding object should have the following structure:
+   * {
+   *   pdfId: string,
+   *   text: string,
+   *   embedding: number[]
+   * }
+   *
+   * @param embeddings Array of embedding objects
+   * @returns An object indicating success or failure with an optional error message
+   */
+  async uploadEmbeddings(
+    embeddings: { pdf_id: string; text: string; embedding: number[] }[],
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data, error } = await this.supabase
+        .from('pdf_embeddings')
+        .insert(embeddings);
+
+      if (error) {
+        console.error('Error uploading embeddings:', error);
+        return {
+          success: false,
+          error: error.message || 'Error uploading embeddings',
+        };
+      }
+      return { success: true };
+    } catch (err) {
+      console.error('Unexpected error uploading embeddings:', err);
+      return { success: false, error: err.message || 'Unexpected error' };
+    }
   }
 }
