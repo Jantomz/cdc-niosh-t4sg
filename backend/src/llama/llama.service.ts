@@ -39,11 +39,4 @@ export class LlamaService {
       },
     };
   }
-
-  async getChatResponse(messages: any[]) {
-    // TODO: Implement LLaMa chat functionality
-    return {
-      response: 'This will be the LLaMa chat response',
-    };
-  }
 }
