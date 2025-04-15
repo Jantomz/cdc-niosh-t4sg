@@ -5,6 +5,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Embed from "./pages/Embed";
+import ChatBot from "./pages/ChatBot";
 
 const App = () => {
     const { isAuthenticated } = useAuth0();
@@ -19,6 +20,7 @@ const App = () => {
                         <Routes>
                             <Route path="/" element={<Home />} />
                             <Route path="/embed" element={<Embed />} />
+                            <Route path="/chat" element={<ChatBot />} />
                         </Routes>
                     ) : (
                         <div className="flex items-center justify-center h-full">
