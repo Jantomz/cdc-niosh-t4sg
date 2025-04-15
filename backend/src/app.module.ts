@@ -5,10 +5,9 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { LlamaModule } from './llama/llama.module';
 import { PdfModule } from './pdf/pdf.module';
 import { DocsModule } from './docs/docs.module';
-import { DocumentationScraperModule } from './documentation-scraper/documentation-scraper.module';
 
 @Module({
-  imports: [SupabaseModule, LlamaModule, PdfModule, DocsModule, DocumentationScraperModule],
+  imports: [SupabaseModule, LlamaModule, PdfModule, DocsModule],
   controllers: [AppController],
   providers: [AppService],
 })
