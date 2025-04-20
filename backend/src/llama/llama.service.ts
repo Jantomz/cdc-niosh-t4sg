@@ -39,4 +39,12 @@ export class LlamaService {
       },
     };
   }
+
+  // Michelle: this method is needed in rag.service.ts for embedding retrieveRelevantDocuments
+  // idk if this function is already done somewehere else but as far as my research goes it should
+  // be in llama.service.ts
+  async getEmbedding(text: string): Promise<number[]> {
+    // TODO: call your embedding model or external API
+    return [];  // placeholder
+  }
 }
