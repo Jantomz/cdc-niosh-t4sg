@@ -87,6 +87,8 @@ export class RagService {
 
       // TODO: Store the query, response, and source references in Supabase for history
 
+      console.log(sourceReferences);
+
       return {
         response: response.text,
         sourceReferences,
@@ -138,7 +140,7 @@ export class RagService {
 
     console.log(`Retrieving documents for keywords: ${keywords.join(', ')}`);
 
-    return this.notionService.queryDocuments(keywords.join(' '), 0.5, 5);
+    return this.notionService.queryDocuments(keywords.join(' '), 0.2, 5);
     // For scaffolding purposes, we'll return placeholder data
     return Promise.resolve([
       {
@@ -263,7 +265,7 @@ Please provide a helpful response based on the above context. Include references
 
       return {
         id: referenceId,
-        title: `Document ${doc.id}`,
+        title: `[${index + 1}] Document ${doc.id}`,
         content: doc.content,
         type: doc.metadata.type,
         confidence: doc.similarity,
@@ -271,7 +273,6 @@ Please provide a helpful response based on the above context. Include references
         pagePath: '', // Page path is not provided in the interface
         imageUrl:
           doc.metadata.type === 'image' ? doc.metadata.urls[0] : undefined,
-        language: undefined, // Language is not provided in the interface
         referenceId,
         url:
           doc.metadata.source === 'notion'

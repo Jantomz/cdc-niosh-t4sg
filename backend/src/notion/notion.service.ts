@@ -204,7 +204,7 @@ export class NotionService {
     if (error) throw error;
   }
 
-  public async queryDocuments(query: string, threshold = 0.5, count = 5) {
+  public async queryDocuments(query: string, threshold = 0.2, count = 5) {
     const queryEmbedding = await this.generateEmbedding(query);
 
     console.log('Query embedding:', queryEmbedding);
