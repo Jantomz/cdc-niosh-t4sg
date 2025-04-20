@@ -31,7 +31,9 @@ export class SupabaseService {
 
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
-
+  public get client(): SupabaseClient {
+    return this.supabase;
+  }
   /**
    * DELIVERABLE 1: PDF Upload Functionality
    *

@@ -4,6 +4,7 @@ import ChatMessage from "../components/ChatBot/ChatMessage";
 import SourcePanel from "../components/ChatBot/SourcePanel";
 import LoadingIndicator from "../components/ChatBot/LoadingIndicator";
 import { Message, RagResponse, SourceReference } from "../types/chat";
+import { RagApi } from "../services/api";
 
 const ChatBot: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -45,31 +46,21 @@ const ChatBot: React.FC = () => {
     
     try {
       // TODO: Replace with actual API endpoint for RAG query
-      const response = await fetch(`${backendURL}/rag/query`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query: content }),
+      const response = await RagApi.queryRag({
+        query: content,
+        conversationContext: messages,
       });
       
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`);
-      }
-      
-      const data: RagResponse = await response.json();
-      
       // Add assistant response to chat
-      const assistantMessage: Message = {
+      const assistantMsg: Message = {
         id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        content: data.response,
+        role: "assistant",
+        content: response.response,
         timestamp: new Date(),
-        sourceReferences: data.sourceReferences,
+        sourceReferences: response.sourceReferences,
       };
-      
-      setMessages((prev) => [...prev, assistantMessage]);
-      setCurrentSources(data.sourceReferences || []);
+      setMessages((prev) => [...prev, assistantMsg]);
+      setCurrentSources(response.sourceReferences);
     } catch (err) {
       console.error("Error querying RAG system:", err);
       setError("Sorry, there was an error processing your request. Please try again.");
