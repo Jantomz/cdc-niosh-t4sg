@@ -9,7 +9,7 @@ import {
   UploadedFile,
   UseInterceptors,
   Query,
-  Logger
+  Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SupabaseService } from './supabase.service';
@@ -86,40 +86,49 @@ export class SupabaseController {
   @Get('pdf')
   async getAllPdfs(@Query() filters?: Record<string, any>) {
     try {
-      this.logger.log(`Retrieving PDFs with filters: ${JSON.stringify(filters)}`);
-      
+      this.logger.log(
+        `Retrieving PDFs with filters: ${JSON.stringify(filters)}`,
+      );
+
       const processedFilters: Record<string, any> = {};
-      
+
       if (filters?.dateFrom) {
         processedFilters.dateFrom = new Date(filters.dateFrom).toISOString();
       }
       if (filters?.dateTo) {
         processedFilters.dateTo = new Date(filters.dateTo).toISOString();
       }
-      
+
       if (filters?.author) {
         processedFilters.author = filters.author;
       }
-      
+
       if (filters?.textExtracted !== undefined) {
         processedFilters.textExtracted = filters.textExtracted === 'true';
       }
-      
+
       if (filters?.title) {
         processedFilters.title = filters.title;
       }
-      
+
       const pdfs = await this.supabaseService.getAllPdfs(
-        Object.keys(processedFilters).length > 0 ? processedFilters : undefined
+        Object.keys(processedFilters).length > 0 ? processedFilters : undefined,
       );
-      
+
       return {
         success: true,
         count: (pdfs ?? []).length,
-        data: pdfs
+        data: pdfs,
       };
-    } catch (error) {
-      this.logger.error(`Error retrieving PDFs: ${error.message}`, error.stack);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        this.logger.error(
+          `Error retrieving PDFs: ${error.message}`,
+          error.stack,
+        );
+      } else {
+        this.logger.error('Error retrieving PDFs: An unknown error occurred');
+      }
     }
   }
 
@@ -132,15 +141,22 @@ export class SupabaseController {
   async getPdfById(@Param('id') id: string) {
     try {
       this.logger.log(`Retrieving PDF with ID: ${id}`);
-      
+
       const pdf = await this.supabaseService.getPdfById(id);
-      
+
       return {
         success: true,
-        data: pdf
+        data: pdf,
       };
     } catch (error) {
-      this.logger.error(`Error retrieving PDF: ${error.message}`, error.stack);
+      if (error instanceof Error) {
+        this.logger.error(
+          `Error retrieving PDF: ${error.message}`,
+          error.stack,
+        );
+      } else {
+        this.logger.error('Error retrieving PDF: An unknown error occurred');
+      }
     }
   }
 }

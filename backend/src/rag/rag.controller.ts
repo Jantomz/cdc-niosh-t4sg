@@ -11,13 +11,16 @@ export class RagController {
    * Query the RAG system with user input
    */
   @Post('query')
-  async queryRag(@Body() queryDto: { 
-    query: string;
-    conversationId?: string;
-    conversationContext?: any[];
-  }) {
+  async queryRag(
+    @Body()
+    queryDto: {
+      query: string;
+      conversationId?: string;
+      conversationContext?: any[];
+    },
+  ) {
     this.logger.log(`Received RAG query: ${queryDto.query}`);
-    
+
     return this.ragService.queryRag(
       queryDto.query,
       queryDto.conversationId,
@@ -29,9 +32,9 @@ export class RagController {
    * Get a specific source reference by ID
    */
   @Get('sources/:id')
-  async getSourceReference(@Param('id') id: string) {
+  getSourceReference(@Param('id') id: string) {
     this.logger.log(`Fetching source reference: ${id}`);
-    
+
     return this.ragService.getSourceReference(id);
   }
 
@@ -39,9 +42,9 @@ export class RagController {
    * Get all source references for a response
    */
   @Get('sources/response/:responseId')
-  async getSourceReferencesForResponse(@Param('responseId') responseId: string) {
+  getSourceReferencesForResponse(@Param('responseId') responseId: string) {
     this.logger.log(`Fetching sources for response: ${responseId}`);
-    
+
     return this.ragService.getSourceReferencesForResponse(responseId);
   }
 }

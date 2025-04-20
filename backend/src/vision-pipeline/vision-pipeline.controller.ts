@@ -5,9 +5,7 @@ import { VisionPipelineService } from './vision-pipeline.service';
 export class VisionPipelineController {
   private readonly logger = new Logger(VisionPipelineController.name);
 
-  constructor(
-    private readonly visionPipelineService: VisionPipelineService,
-  ) {}
+  constructor(private readonly visionPipelineService: VisionPipelineService) {}
 
   /**
    * Process a page with images from Notion
@@ -41,13 +39,12 @@ export class VisionPipelineController {
    * Reconstruct content with images for display
    */
   @Post('reconstruct-content')
-  async reconstructContent(
-    @Body() data: { processedContent: string },
-  ) {
+  async reconstructContent(@Body() data: { processedContent: string }) {
     this.logger.log('Received request to reconstruct content with images');
-    const restoredContent = await this.visionPipelineService.reconstructContentWithImages(
-      data.processedContent,
-    );
+    const restoredContent =
+      await this.visionPipelineService.reconstructContentWithImages(
+        data.processedContent,
+      );
     return {
       success: true,
       restoredContent,
